@@ -1,0 +1,90 @@
+schedule:
+  cron: "0 8 * * 1-5"          # Every weekday at 08:00
+  timezone: "Europe/Berlin"
+  lookback_hours: 24           # Fetch articles from last 24 hours
+  max_items_per_section: 5     # Max articles per section in gazette
+
+slack:
+  webhook_url: "${SLACK_WEBHOOK_URL}"  # Set via environment variable
+  newspaper_name: "The Security Gazette"
+  show_sources_count: true
+
+sources:
+  - name: "CISA Alerts"
+    url: "https://www.cisa.gov/cybersecurity-advisories/all.xml"
+    enabled: true
+    weight: 3                   # Higher weight = appears first
+    
+  - name: "Krebs on Security"
+    url: "https://krebsonsecurity.com/feed"
+    enabled: true
+    weight: 2
+    
+  - name: "Schneier on Security"
+    url: "https://www.schneier.com/feeds/blog.xml"
+    enabled: true
+    weight: 1
+    
+  - name: "SANS ISC"
+    url: "https://isc.sans.edu/dailypodcast.xml"
+    enabled: true
+    weight: 2
+    
+  - name: "The Hacker News"
+    url: "https://feeds.thehackernews.com/feed.xml"
+    enabled: true
+    weight: 3
+    
+  - name: "Bleeping Computer"
+    url: "https://www.bleepingcomputer.com/feed/"
+    enabled: true
+    weight: 2
+    
+  - name: "Dark Reading"
+    url: "https://www.darkreading.com/feed/articles/rss.xml"
+    enabled: true
+    weight: 1
+    
+  - name: "SecurityWeek"
+    url: "https://feeds.securityweek.com/securityweek"
+    enabled: true
+    weight: 1
+    
+  - name: "Recorded Future"
+    url: "https://www.recordedfuture.com/feed/"
+    enabled: true
+    weight: 2
+    
+  - name: "CERT/CC"
+    url: "https://www.kb.cert.org/vlfeed/"
+    enabled: true
+    weight: 1
+
+sections:
+  THREAT_INTELLIGENCE:
+    emoji: "⚠️"
+    keywords: ["APT", "threat actor", "TA\\d+", "state-sponsored", "campaign", "malicious", "threat"]
+    
+  VULNERABILITIES:
+    emoji: "🐛"
+    keywords: ["CVE-", "vulnerability", "0-day", "zero-day", "exploit", "patch", "flaw"]
+    
+  BREACHES:
+    emoji: "🚨"
+    keywords: ["breach", "data leak", "leaked", "compromise", "unauthorized access", "incident"]
+    
+  RANSOMWARE:
+    emoji: "💀"
+    keywords: ["ransomware", "malware", "worm", "trojan", "encrypted", "attack"]
+    
+  INDUSTRY_POLICY:
+    emoji: "🏛️"
+    keywords: ["regulation", "policy", "compliance", "GDPR", "HIPAA", "law", "government"]
+    
+  TOOLS_TECHNIQUES:
+    emoji: "🔧"
+    keywords: ["tool", "technique", "framework", "methodology", "defense", "detection"]
+    
+  ADVISORIES:
+    emoji: "📢"
+    keywords: ["advisory", "alert", "warning", "notice", "recommend", "security bulletin"]
