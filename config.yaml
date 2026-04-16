@@ -5,7 +5,7 @@ schedule:
   max_items_per_section: 5     # Max articles per section in gazette
 
 slack:
-  webhook_url: "${SLACK_WEBHOOK_URL}"  # Set via environment variable
+  webhook_url: "${SLACK_WEBHOOK_URL}"  # export SLACK_WEBHOOK_URL=https://hooks.slack.com/...
   newspaper_name: "The Security Gazette"
   show_sources_count: true
 

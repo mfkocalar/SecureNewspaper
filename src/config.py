@@ -42,7 +42,8 @@ class ConfigManager:
         """Expand environment variables in config (${VAR_NAME})."""
         webhook_url = self.config.get('slack', {}).get('webhook_url', '')
         if webhook_url and webhook_url.startswith('${') and webhook_url.endswith('}'):
-            env_var = webhook_url[2:-1]  # Extract VAR_NAME from ${VAR_NAME}
+            inner = webhook_url[2:-1]  # Strip ${ and }
+            env_var = inner.split('=')[0]  # Handle ${VAR=default} — only use VAR part
             expanded = os.getenv(env_var)
             if not expanded:
                 raise ValueError(
