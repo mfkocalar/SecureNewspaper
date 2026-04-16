@@ -5,11 +5,18 @@ from datetime import datetime, timedelta, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List
 import time
+import requests
 
 from .models import Article, ParsedFeed
 from .config import ConfigManager
 
 logger = logging.getLogger(__name__)
+
+
+# Headers to avoid being blocked by anti-bot measures (Cloudflare, etc.)
+DEFAULT_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+}
 
 
 class RSSFetcher:
@@ -96,10 +103,26 @@ class RSSFetcher:
         
         try:
             logger.debug(f"Fetching {source_name} from {source_url}")
-            feed = feedparser.parse(source_url)
+            
+            # Fetch with headers to avoid Cloudflare/anti-bot blocking
+            response = requests.get(source_url, headers=DEFAULT_HEADERS, timeout=self.TIMEOUT_PER_SOURCE)
+            response.raise_for_status()
+            
+            # Parse the fetched content
+            feed = feedparser.parse(response.text)
             
             if feed.bozo:
-                logger.warning(f"{source_name}: Malformed feed (XML errors present)")
+                error_msg = str(feed.bozo_exception) if feed.bozo_exception else "Unknown XML error"
+                logger.warning(f"{source_name}: Malformed feed (XML errors present): {error_msg}")
+                
+                # If bozo parser failed to get any entries, try alternative approach
+                if len(feed.entries) == 0:
+                    logger.debug(f"{source_name}: Attempting to parse with lenient XML handling...")
+                    feed = self._try_lenient_parse_content(response.text)
+                    if len(feed.entries) > 0:
+                        logger.info(f"{source_name}: Recovered {len(feed.entries)} articles with lenient parsing")
+                    else:
+                        logger.warning(f"{source_name}: No articles could be extracted due to XML parsing errors")
             
             articles = self._parse_entries(feed.entries, source_name)
             duration = time.time() - start_time
@@ -120,6 +143,33 @@ class RSSFetcher:
                 error=str(e),
                 fetch_duration_seconds=duration
             )
+    
+    def _try_lenient_parse_content(self, content: str):
+        """
+        Attempt to parse feed content with lenient error handling.
+        Uses different parsing strategies to recover from malformed XML.
+        
+        Args:
+            content: Raw feed content (HTML or XML)
+            
+        Returns:
+            feedparser result object (may still have bozo=True but possibly with entries)
+        """
+        try:
+            # Try basic XML cleaning: remove common problematic patterns
+            # Replace unescaped ampersands in URLs (common issue)
+            import re
+            cleaned_content = re.sub(r'&(?!(?:[a-z]+|#[0-9]+);)', '&amp;', content)
+            
+            # Try parsing the cleaned content
+            feed = feedparser.parse(cleaned_content)
+            return feed
+        except Exception as e:
+            logger.debug(f"Lenient parse also failed: {e}")
+            # Return empty feedparser result with entries list
+            result = feedparser.util.FeedParserDict()
+            result['entries'] = []
+            return result
     
     def _parse_entries(self, entries: list, source_name: str) -> List[Article]:
         """
@@ -183,7 +233,7 @@ class RSSFetcher:
         """
         Extract and parse publication date from entry.
         
-        Returns datetime in UTC or fallback time if unable to parse.
+        Returns datetime in UTC (timezone-aware) or fallback time if unable to parse.
         """
         import email.utils
         from time import mktime
@@ -197,7 +247,8 @@ class RSSFetcher:
         
         if date_field:
             try:
-                dt = datetime.fromtimestamp(mktime(date_field), tz=None)
+                # Convert struct_time to UTC datetime
+                dt = datetime.fromtimestamp(mktime(date_field), tz=timezone.utc)
                 return dt
             except Exception:
                 pass
@@ -208,7 +259,8 @@ class RSSFetcher:
                 try:
                     _, timestamp = email.utils.parsedate_tz(entry[field])
                     if timestamp is not None:
-                        dt = datetime.utcfromtimestamp(timestamp)
+                        # Create timezone-aware datetime from timestamp
+                        dt = datetime.fromtimestamp(timestamp, tz=timezone.utc)
                         return dt
                 except Exception:
                     pass

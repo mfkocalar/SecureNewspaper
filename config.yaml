@@ -13,51 +13,51 @@ sources:
   - name: "CISA Alerts"
     url: "https://www.cisa.gov/cybersecurity-advisories/all.xml"
     enabled: true
-    weight: 3                   # Higher weight = appears first
+    weight: 1
     
   - name: "Krebs on Security"
     url: "https://krebsonsecurity.com/feed"
     enabled: true
-    weight: 2
+    weight: 1
     
   - name: "Schneier on Security"
     url: "https://www.schneier.com/feeds/blog.xml"
-    enabled: true
+    enabled: false
     weight: 1
     
   - name: "SANS ISC"
     url: "https://isc.sans.edu/dailypodcast.xml"
     enabled: true
-    weight: 2
+    weight: 1
     
   - name: "The Hacker News"
     url: "https://feeds.thehackernews.com/feed.xml"
-    enabled: true
-    weight: 3
+    enabled: false
+    weight: 1
     
   - name: "Bleeping Computer"
     url: "https://www.bleepingcomputer.com/feed/"
     enabled: true
-    weight: 2
+    weight: 1
     
   - name: "Dark Reading"
-    url: "https://www.darkreading.com/feed/articles/rss.xml"
+    url: "https://www.darkreading.com/rss.xml"
     enabled: true
     weight: 1
     
   - name: "SecurityWeek"
     url: "https://feeds.securityweek.com/securityweek"
-    enabled: true
+    enabled: false
     weight: 1
     
   - name: "Recorded Future"
     url: "https://www.recordedfuture.com/feed/"
     enabled: true
-    weight: 2
+    weight: 1
     
   - name: "CERT/CC"
     url: "https://www.kb.cert.org/vlfeed/"
-    enabled: true
+    enabled: false
     weight: 1
 
 sections:
