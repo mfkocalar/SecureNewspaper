@@ -105,7 +105,40 @@ class RSSFetcher:
             logger.debug(f"Fetching {source_name} from {source_url}")
             
             # Fetch with headers to avoid Cloudflare/anti-bot blocking
-            response = requests.get(source_url, headers=DEFAULT_HEADERS, timeout=self.TIMEOUT_PER_SOURCE)
+            # Disable automatic redirects to prevent SSRF attacks
+            response = requests.get(
+                source_url,
+                headers=DEFAULT_HEADERS,
+                timeout=self.TIMEOUT_PER_SOURCE,
+                allow_redirects=False
+            )
+            
+            # Manually validate redirects (only allow HTTPS to same host)
+            if response.is_redirect or response.status_code in (301, 302, 303, 307, 308):
+                location = response.headers.get('Location', '')
+                if not location:
+                    raise ValueError(f"Redirect response without Location header")
+                
+                from urllib.parse import urlparse
+                orig_parsed = urlparse(source_url)
+                dest_parsed = urlparse(location)
+                
+                # Only allow HTTPS redirects to the same host
+                if dest_parsed.scheme != 'https':
+                    raise ValueError(f"Redirect to non-HTTPS URL: {location}")
+                
+                if dest_parsed.netloc != orig_parsed.netloc:
+                    raise ValueError(f"Redirect to different host: {location}")
+                
+                # Follow the allowed redirect
+                logger.debug(f"{source_name}: Following allowed redirect to {location}")
+                response = requests.get(
+                    location,
+                    headers=DEFAULT_HEADERS,
+                    timeout=self.TIMEOUT_PER_SOURCE,
+                    allow_redirects=False
+                )
+            
             response.raise_for_status()
             
             # Parse the fetched content
