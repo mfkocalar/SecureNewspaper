@@ -1,257 +1,370 @@
 # Security Newspaper 📰
 
-A lightweight, daily security news aggregator that fetches from 10 curated cybersecurity sources, classifies articles into 7 sections, and publishes a newspaper-formatted message to Slack.
+**A daily security news aggregator that keeps your team informed.**
 
+Automatically fetches cybersecurity articles from 10 trusted sources, organizes them into 7 categories, and delivers a polished newspaper to your Slack channel each morning.
 
-## Quick Start
+---
 
-### 1. Clone and Setup
+## ✨ What It Does
+
+- 🔍 Fetches articles from 10 security sources in parallel
+- 📂 Automatically categorizes articles into 7 sections
+- 🚫 Removes duplicate articles from the same day
+- 📰 Formats a professional newspaper for Slack
+- ⏰ Runs automatically on a daily schedule
+- 📋 Logs all activities for troubleshooting
+
+---
+
+## 🚀 Quick Start (5 minutes)
+
+### Step 1: Setup Python Environment
 
 ```bash
 git clone <repo>
 cd security-newspaper
 python -m venv venv
-source venv/bin/activate  # or: venv\Scripts\activate on Windows
+source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 2. Configure Slack Webhook
+### Step 2: Create Slack Webhook
 
-Get your Slack Incoming Webhook URL:
 1. Go to https://api.slack.com/apps
-2. Create a new app or select existing one
-3. Enable Incoming Webhooks
-4. Create new webhook URL and copy it
+2. Click "Create New App" (or select existing)
+3. Enable "Incoming Webhooks"
+4. Create a new webhook and copy the URL
+5. Save it as an environment variable:
 
-Set environment variable:
 ```bash
 export SLACK_WEBHOOK_URL="https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
 ```
 
-### 3. Test Immediately
+### Step 3: Test It Works
 
 ```bash
 python -m src.main --now
 ```
 
-This will:
-- Fetch from all 10 sources
-- Classify articles into 7 sections
-- Format and send to Slack
-- Show output in terminal + logs
+You should see:
+- Articles fetched from 10 sources ✓
+- Articles organized into 7 sections ✓
+- A newspaper message posted to Slack ✓
+- Logs saved to `logs/newspaper.log` ✓
 
-### 4. Schedule Daily Runs
+### Step 4: Schedule Daily Delivery
 
-Edit your crontab:
+Set up automatic daily runs:
+
 ```bash
 crontab -e
 ```
 
-Add (runs every weekday at 8 AM):
+Add this line (runs every weekday at 8 AM):
 ```
 0 8 * * 1-5 cd /path/to/security-newspaper && /path/to/venv/bin/python -m src.main
 ```
 
-Check logs:
+Monitor the logs anytime:
 ```bash
 tail -f logs/newspaper.log
 ```
 
-## Configuration
+---
 
-Edit `config.yaml`:
+## ⚙️ Configuration
 
-- **schedule**: Cron expression, timezone, lookback hours
-- **slack**: Webhook URL (via env var), newspaper name
-- **sources**: 10 RSS feeds (enable/disable, weights)
-- **sections**: Category keywords (emoji, regex patterns)
+All settings are in `config.yaml`. Most defaults work out of the box, but you can customize:
 
-Example:
+**Basic Settings:**
 ```yaml
 schedule:
-  cron: "0 8 * * 1-5"       # Every weekday 8 AM
-  timezone: "Europe/Berlin"
-  lookback_hours: 24
-  max_items_per_section: 5
+  cron: "0 8 * * 1-5"       # Runs every weekday at 8 AM
+  timezone: "Europe/Berlin"  # Your timezone
+  lookback_hours: 24        # How far back to look for articles
+  max_items_per_section: 5  # Max articles per category
 
 slack:
-  webhook_url: "${SLACK_WEBHOOK_URL}"  # Set via env var
+  webhook_url: "${SLACK_WEBHOOK_URL}"  # Read from environment variable
+  newspaper_name: "Security Gazette"   # Name shown in Slack
 ```
 
-## Command Line Options
+**News Sources:** Enable/disable each of the 10 sources in the config
+**Categories:** Customize keywords and emoji for each of the 7 sections
+
+---
+
+## 💻 Commands Reference
+
+### Common Commands
 
 ```bash
-python -m src.main [OPTIONS]
-
-Options:
-  --now           Run pipeline immediately (don't schedule)
-  --test          Use mock RSS sources for testing
-  --dry-run       Format and display but don't publish to Slack
-  --config FILE   Path to config.yaml
-```
-
-### Examples
-
-```bash
-# Run now and publish to Slack
+# Run immediately (don't wait for schedule)
 python -m src.main --now
 
-# Test with mock sources (doesn't hit real feeds)
+# Test with fake data (doesn't hit real news sites)
 python -m src.main --now --test
 
-# Dry-run: format but don't send to Slack
+# Preview output without sending to Slack
 python -m src.main --now --dry-run
 
-# Start daemon (scheduled via cron)
+# Use a different config file
+python -m src.main --config custom-config.yaml
+
+# Start background daemon (uses cron schedule)
 python -m src.main
 ```
 
-## Architecture
+---
+
+## 🏗️ How It Works
+
+The system follows this pipeline:
 
 ```
-┌─────────────────────────────────────┐
-│ 10 RSS Sources                      │
-├─────────────────────────────────────┤
-│ Fetcher (parallel ThreadPoolExecutor)
-├─────────────────────────────────────┤
-│ Deduplicator (session hash)         │
-├─────────────────────────────────────┤
-│ Classifier (regex → 7 sections)     │
-├─────────────────────────────────────┤
-│ Formatter (Slack Block Kit)         │
-├─────────────────────────────────────┤
-│ Publisher (Webhook → Slack Channel) │
-└─────────────────────────────────────┘
+10 News Sources → Fetch Articles → Remove Duplicates → Categorize 
+    ↓
+Format for Slack → Send to Slack → Log Results
 ```
 
-### Modules
+**Step by Step:**
 
-- `config.py` - YAML configuration loader & validator
-- `fetcher.py` - Parallel RSS feed fetcher (ThreadPoolExecutor)
-- `deduplicator.py` - Session-only deduplication (in-memory hash)
-- `classifier.py` - Article classification by regex keywords
-- `formatter.py` - Slack Block Kit JSON formatting
-- `publisher.py` - Webhook POST to Slack
-- `orchestrator.py` - Pipeline orchestration
-- `main.py` - CLI & APScheduler daemon
+1. **Fetch** - Pulls articles from 10 RSS feeds simultaneously
+2. **Deduplicate** - Removes articles already sent today
+3. **Classify** - Organizes articles into 7 security categories
+4. **Format** - Converts to a Slack-readable newspaper layout
+5. **Publish** - Sends to your Slack webhook
+6. **Log** - Records everything for troubleshooting
 
-## Slack Gazette Format
+---
 
-Message contains:
-- Header with date, total stories, source count
-- 7 sections (emoji + section name):
-  - ⚠️ Threat Intelligence
-  - 🐛 Vulnerabilities & CVEs
-  - 🚨 Data Breaches
-  - 💀 Ransomware & Malware
-  - 🏛️ Industry & Policy
-  - 🔧 Tools & Techniques
-  - 📢 Advisories
-- Per-article: title (linked), description snippet, source
-- Footer with generation timestamp
+## 📦 Project Modules
 
-## 10 Security Sources
+| Module | Purpose |
+|--------|---------|
+| `main.py` | Entry point and command-line interface |
+| `config.py` | Loads and validates settings from `config.yaml` |
+| `fetcher.py` | Downloads articles from RSS feeds in parallel |
+| `deduplicator.py` | Prevents duplicate articles in the daily digest |
+| `classifier.py` | Assigns articles to security categories |
+| `formatter.py` | Converts articles to Slack message format |
+| `publisher.py` | Sends the message to Slack via webhook |
+| `orchestrator.py` | Manages the complete pipeline |
+| `models.py` | Data structures used throughout |
 
-1. **CISA Alerts** - Government advisories
-2. **Krebs on Security** - Breach investigations
-3. **Schneier on Security** - Policy & analysis
-4. **SANS ISC** - Daily threat summary
+---
+
+## 📰 The Slack Newspaper Format
+
+Here's what the daily message includes:
+
+**Header**
+- Date and time generated
+- Total number of articles
+- Number of sources used
+
+**7 News Sections** (each with emoji):
+| Section | Emoji | Content |
+|---------|-------|---------|
+| Threat Intelligence | 🔍 | APT activity, security research |
+| Vulnerabilities | 🐛 | CVE announcements, exploits |
+| Data Breaches | 🚨 | Corporate breaches, incidents |
+| Ransomware & Malware | 💀 | New malware families, campaigns |
+| Industry & Policy | 🏛️ | Regulations, government updates |
+| Tools & Techniques | 🔧 | New security tools, methods |
+| Advisories | 📢 | Security patches, recommendations |
+
+**Per Article**
+- Title (clickable link to original)
+- Brief description
+- Source name
+
+**Footer**
+- Generation timestamp
+
+---
+
+## 📡 The 10 News Sources
+
+1. **CISA Alerts** - US government security advisories
+2. **Krebs on Security** - Deep-dive breach investigations
+3. **Schneier on Security** - Policy analysis and commentary
+4. **SANS ISC** - Daily threat summaries
 5. **The Hacker News** - Critical vulnerabilities
-6. **Bleeping Computer** - Ransomware & malware
-7. **Dark Reading** - Enterprise security
-8. **SecurityWeek** - CVE announcements
-9. **Recorded Future** - APT & threat intel
-10. **CERT/CC** - Vulnerability advisories
+6. **Bleeping Computer** - Ransomware and malware focus
+7. **Dark Reading** - Enterprise security news
+8. **SecurityWeek** - CVE and vulnerability news
+9. **Recorded Future** - Advanced threat intelligence
+10. **CERT/CC** - Official vulnerability advisories
 
-## Logs
+---
 
-Logs written to `logs/newspaper.log`:
-- INFO: Fetch summary, classification summary, publish status
-- DEBUG: Per-article details, regex matches
-- ERROR: Failed fetches, configuration errors
+## 📋 Logs & Debugging
 
+All activity is logged to `logs/newspaper.log`:
+
+**Log Levels:**
+- `INFO` - Successful runs, fetch summaries, publish confirmations
+- `DEBUG` - Per-article details, regex matches, detailed processing
+- `ERROR` - Failed fetches, configuration errors, connection issues
+
+**Watch logs live:**
 ```bash
-# Watch logs in real-time
 tail -f logs/newspaper.log
+```
 
-# Check for errors
+**Find problems:**
+```bash
+# Look for errors
 grep ERROR logs/newspaper.log
+
+# Check Slack connection
+grep "Slack" logs/newspaper.log
+
+# See articles from a specific source
+grep "BleepingComputer" logs/newspaper.log
 ```
 
 
-## Troubleshooting
+---
 
-### No articles appear in gazette
+## 🔧 Troubleshooting
 
+### ❌ No articles in the newspaper
+
+**Check what's happening:**
 ```bash
-# Check for fetch errors
+python -m src.main --now --dry-run
 tail -f logs/newspaper.log | grep ERROR
-
-# Test with mock sources
-python -m src.main --now --test
-
-# Check RSS source URLs in config.yaml
 ```
 
-### Slack message not posting
-
+**Try the test mode:**
 ```bash
-# Verify webhook URL is set
+# Uses fake data instead of real feeds
+python -m src.main --now --test
+```
+
+**Verify RSS sources are available:**
+- Check `config.yaml` - are sources enabled?
+- Verify internet connection
+- Check that RSS URLs are not blocked
+
+---
+
+### ❌ Message not appearing in Slack
+
+**Verify webhook is set correctly:**
+```bash
+# Check environment variable
 echo $SLACK_WEBHOOK_URL
 
-# Test webhook directly
-curl -X POST -H 'Content-type: application/json' \
-  --data '{"text":"Test"}' \
-  $SLACK_WEBHOOK_URL
-
-# Check logs for HTTP errors
-tail -f logs/newspaper.log | grep "Slack"
+# Should print: https://hooks.slack.com/services/...
 ```
 
-### Wrong section assignments
-
-Edit regex keywords in `config.yaml` sections, restart.
-
-### Schedule not triggering
-
-Verify cron job:
+**Test the webhook directly:**
 ```bash
+curl -X POST -H 'Content-type: application/json' \
+  --data '{"text":"Test message"}' \
+  $SLACK_WEBHOOK_URL
+```
+
+**Check logs for errors:**
+```bash
+tail -f logs/newspaper.log | grep -i "slack"
+```
+
+---
+
+### ❌ Articles in wrong categories
+
+**Fix categorization:**
+1. Open `config.yaml`
+2. Find the `sections` area
+3. Update keywords and regex patterns
+4. Restart the application
+
+---
+
+### ❌ Scheduled job not running
+
+**Verify cron is set up:**
+```bash
+# List your cron jobs
 crontab -l
 ```
 
-Check system log:
+**Check system logs (macOS):**
 ```bash
 log show --predicate 'eventMessage contains "newspaper"' --last 1h
 ```
 
-## Development
-
-### Project Structure
-
+**Test the cron command manually:**
+```bash
+cd /path/to/security-newspaper && /path/to/venv/bin/python -m src.main
 ```
-security-newspaper/
-├── config.yaml              # Configuration
-├── requirements.txt         # Dependencies
-├── src/
-│   ├── __init__.py
-│   ├── main.py             # Entry point & CLI
-│   ├── config.py           # Config loader
-│   ├── models.py           # Data classes
-│   ├── fetcher.py          # RSS fetcher
-│   ├── deduplicator.py     # Dedup logic
-│   ├── classifier.py       # Section classification
-│   ├── formatter.py        # Slack formatting
-│   ├── publisher.py        # Slack publishing
-│   └── orchestrator.py     # Pipeline
-├── test/
-│   ├── __init__.py
-│   └── mock_sources.py     # Mock RSS data
-└── logs/
-    └── newspaper.log       # Runtime logs
-```
-
-## License
-
-MIT License - See LICENSE file
 
 ---
+
+## 👨‍💻 Development & Project Structure
+
+**Directory layout:**
+```
+security-newspaper/
+├── config.yaml              # Main configuration file
+├── requirements.txt         # Python dependencies
+├── README.md               # This file
+│
+├── src/                    # Main application code
+│   ├── main.py            # Entry point & CLI
+│   ├── config.py          # Config loader
+│   ├── models.py          # Data structures
+│   ├── fetcher.py         # Fetch articles
+│   ├── deduplicator.py    # Remove duplicates
+│   ├── classifier.py      # Categorize articles
+│   ├── formatter.py       # Format for Slack
+│   ├── publisher.py       # Send to Slack
+│   └── orchestrator.py    # Run the pipeline
+│
+├── test/                   # Testing utilities
+│   ├── mock_sources.py    # Fake articles for testing
+│   └── __init__.py
+│
+└── logs/                   # Runtime logs
+    └── newspaper.log      # Main log file
+```
+
+**Key technologies:**
+- `APScheduler` - Handles scheduled runs
+- `feedparser` - Parses RSS feeds
+- `requests` - Sends to Slack
+- `PyYAML` - Reads configuration
+
+---
+
+## ❓ FAQ
+
+**Q: Can I add my own news source?**
+A: Yes! Add the RSS feed URL to `config.yaml` in the `sources` section.
+
+**Q: How often can I run it?**
+A: As often as you want. Adjust the cron expression in `config.yaml`. Default is weekdays at 8 AM.
+
+**Q: Does it remove duplicates across different days?**
+A: No, duplicates are only removed within the same day. This is by design.
+
+**Q: Can I change the categories?**
+A: Yes. Edit the `sections` in `config.yaml` to add, remove, or modify categories.
+
+**Q: What Python version do I need?**
+A: Python 3.8 or newer. Check your version with `python --version`.
+
+---
+
+## 📄 License
+
+MIT License - See LICENSE file for details
+
+---
+
+**Have questions?** Check the logs with `tail -f logs/newspaper.log` or review the troubleshooting section above.
