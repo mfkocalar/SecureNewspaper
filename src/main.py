@@ -93,6 +93,9 @@ def main():
             publish = not args.dry_run
             pipeline.run(publish=publish)
         else:
+            logger.warning("DAEMON MODE: Running as background process (not recommended).")
+            logger.warning("For production, use system cron instead:")
+            logger.warning(f"  0 9 * * 1-5 cd /path/to/security-newspaper && /path/to/venv/bin/python -m src.main --now")
             logger.info("Starting scheduler...")
             
             # Setup scheduler
