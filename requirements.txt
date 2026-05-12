@@ -1,5 +1,5 @@
 feedparser @ git+https://github.com/kurtmckee/feedparser.git@0fc1e9587feb78ab8a07e5b45e9f4bc4c876268a
-lxml==5.4.0
+lxml==6.1.0
 APScheduler==3.10.4
 PyYAML==6.0.1
 slack-sdk==3.23.0
