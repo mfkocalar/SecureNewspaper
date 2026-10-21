@@ -4,7 +4,7 @@ import logging
 import argparse
 from pathlib import Path
 from datetime import datetime
-from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.cron import CronTrigger
 
 from .config import ConfigManager
@@ -99,7 +99,7 @@ def main():
             logger.info("Starting scheduler...")
             
             # Setup scheduler
-            scheduler = BackgroundScheduler()
+            scheduler = BlockingScheduler()
             
             cron_expr = config.get_schedule_cron()
             timezone = config.get_schedule_timezone()
@@ -121,16 +121,12 @@ def main():
                 name='Security Newspaper'
             )
             
-            scheduler.start()
             logger.info("Scheduler started (daemon mode)")
             
-            # Keep running
+            # Blocks until interrupted (no busy-wait)
             try:
-                while True:
-                    pass
-            except KeyboardInterrupt:
-                logger.info("Shutting down scheduler...")
-                scheduler.shutdown()
+                scheduler.start()
+            except (KeyboardInterrupt, SystemExit):
                 logger.info("Scheduler stopped")
     
     except Exception as e:

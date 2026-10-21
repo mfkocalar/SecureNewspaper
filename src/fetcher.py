@@ -24,7 +24,8 @@ class RSSFetcher:
     
     TIMEOUT_PER_SOURCE = 10  # seconds
     MAX_WORKERS = 4
-    
+    MAX_REDIRECTS = 3
+
     def __init__(self, config: ConfigManager, use_mock: bool = False):
         """Initialize fetcher with config.
         
@@ -114,13 +115,20 @@ class RSSFetcher:
             )
             
             # Manually validate redirects (only allow HTTPS to same host)
-            if response.is_redirect or response.status_code in (301, 302, 303, 307, 308):
+            from urllib.parse import urlparse, urljoin
+            orig_parsed = urlparse(source_url)
+            redirects = 0
+            while response.is_redirect or response.status_code in (301, 302, 303, 307, 308):
+                redirects += 1
+                if redirects > self.MAX_REDIRECTS:
+                    raise ValueError(f"Too many redirects (>{self.MAX_REDIRECTS})")
+
                 location = response.headers.get('Location', '')
                 if not location:
                     raise ValueError(f"Redirect response without Location header")
-                
-                from urllib.parse import urlparse
-                orig_parsed = urlparse(source_url)
+
+                # Resolve relative Location headers against the current URL
+                location = urljoin(response.url, location)
                 dest_parsed = urlparse(location)
                 
                 # Only allow HTTPS redirects to the same host
@@ -269,8 +277,8 @@ class RSSFetcher:
         Returns datetime in UTC (timezone-aware) or fallback time if unable to parse.
         """
         import email.utils
-        from time import mktime
-        
+        from calendar import timegm
+
         # Try various date fields
         date_field = None
         for field in ['published_parsed', 'updated_parsed', 'created_parsed']:
@@ -280,8 +288,8 @@ class RSSFetcher:
         
         if date_field:
             try:
-                # Convert struct_time to UTC datetime
-                dt = datetime.fromtimestamp(mktime(date_field), tz=timezone.utc)
+                # Convert struct_time (feedparser normalizes to UTC) to UTC datetime
+                dt = datetime.fromtimestamp(timegm(date_field), tz=timezone.utc)
                 return dt
             except Exception:
                 pass
@@ -290,11 +298,11 @@ class RSSFetcher:
         for field in ['published', 'updated', 'created']:
             if field in entry:
                 try:
-                    _, timestamp = email.utils.parsedate_tz(entry[field])
-                    if timestamp is not None:
-                        # Create timezone-aware datetime from timestamp
-                        dt = datetime.fromtimestamp(timestamp, tz=timezone.utc)
-                        return dt
+                    dt = email.utils.parsedate_to_datetime(entry[field])
+                    # Assume UTC when the date string has no offset
+                    if dt.tzinfo is None:
+                        dt = dt.replace(tzinfo=timezone.utc)
+                    return dt.astimezone(timezone.utc)
                 except Exception:
                     pass
         
