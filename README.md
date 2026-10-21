@@ -1,7 +1,7 @@
 <div align="center">
   <h1>Security Newspaper 📰</h1>
   <p><strong>A daily security news aggregator that keeps your team informed.</strong></p>
-  <p>Automatically fetches cybersecurity articles from 13 verified working sources, organizes them into 7 categories, and delivers a polished newspaper to your Slack channel each morning.</p>
+  <p>Automatically fetches cybersecurity articles from 12 verified working sources, organizes them into 7 categories, and delivers a polished newspaper to your Slack channel each morning.</p>
   <br>
   <a href="#features">Features</a> &bull; <a href="#installation">Installation</a> &bull; <a href="#usage">Usage</a> &bull; <a href="#configuration">Configuration</a> &bull; <a href="#troubleshooting">Troubleshooting</a> &bull; <a href="#contributing">Contributing</a>
   <br><br>
@@ -11,7 +11,7 @@
 
 ## Features
 
-- 🔍 **Multi-Source Aggregation** – Fetches from 13 verified working security sources in parallel
+- 🔍 **Multi-Source Aggregation** – Fetches from 12 verified working security sources in parallel
 - 📂 **Auto-Categorization** – Organizes articles into 7 security categories with emoji
 - 🚫 **Deduplication** – Removes duplicate articles from the same day
 - 📰 **Slack-Ready Format** – Professional newspaper layout for Slack delivery
@@ -61,7 +61,7 @@ python -m src.main --now
 ```
 
 Expected output:
-- Articles fetched from 13 sources ✓
+- Articles fetched from 12 sources ✓
 - Articles organized into 7 sections ✓
 - Newspaper message posted to Slack ✓
 - Logs saved to `logs/newspaper.log` ✓
@@ -148,7 +148,7 @@ slack:
 
 ### News Sources
 
-**13 Verified & Active Sources:**
+**12 Verified & Active Sources:**
 
 | Tier | Source | Description |
 |------|--------|-------------|
@@ -160,14 +160,13 @@ slack:
 | **Enterprise Security** | Dark Reading | Enterprise security news |
 | **Enterprise Security** | CrowdStrike Blog | Threat intelligence & incident response |
 | **Threat Intelligence** | Bleeping Computer | Malware, ransomware & security news |
-| **Threat Intelligence** | Threatpost | Vulnerability & threat analysis |
 | **Threat Intelligence** | Help Net Security | Cybersecurity research & insights |
 | **Tech & General** | TechCrunch Security | Breaking tech security incidents |
 | **Tech & General** | Ars Technica | In-depth tech & security analysis |
 | **Executive News** | CSO Online | Chief Security Officer news & trends |
 
 > [!NOTE]
-> All 13 sources are tested, active, and verified to fetch articles regularly.
+> All 12 sources are tested, active, and verified to fetch articles regularly. Threatpost is kept in `config.yaml` but disabled (inactive since 2022).
 
 ### Categories
 
@@ -188,13 +187,13 @@ Customize keywords and emoji for the 7 security categories in `config.yaml`:
 The system follows this pipeline:
 
 ```
-Fetch Articles (13 sources) → Deduplicate → Categorize 
+Fetch Articles (12 sources) → Deduplicate → Categorize 
     ↓
 Format for Slack → Send to Webhook → Log Results
 ```
 
 **Process:**
-1. **Fetch** – Downloads articles from 13 RSS feeds simultaneously
+1. **Fetch** – Downloads articles from 12 RSS feeds simultaneously
 2. **Deduplicate** – Removes articles already sent today
 3. **Classify** – Organizes into 7 security categories using keywords
 4. **Format** – Converts to Slack-readable newspaper layout

@@ -16,7 +16,7 @@ sources:
     weight: 1
     
   - name: "Krebs on Security"
-    url: "https://krebsonsecurity.com/feed"
+    url: "https://krebsonsecurity.com/feed/"
     enabled: true
     weight: 1
     
@@ -31,7 +31,7 @@ sources:
     weight: 1
     
   - name: "Recorded Future"
-    url: "https://www.recordedfuture.com/feed/"
+    url: "https://www.recordedfuture.com/feed"
     enabled: true
     weight: 1
     
@@ -51,7 +51,7 @@ sources:
     weight: 1
     
   - name: "CrowdStrike Blog"
-    url: "https://www.crowdstrike.com/blog/feed/"
+    url: "https://www.crowdstrike.com/en-us/blog/feed"
     enabled: true
     weight: 1
     
@@ -62,7 +62,7 @@ sources:
     
   - name: "Threatpost"
     url: "https://threatpost.com/feed/"
-    enabled: true
+    enabled: false               # Inactive since 2022 (no new posts)
     weight: 1
     
   - name: "Help Net Security"
